@@ -200,23 +200,6 @@ function applySettings() {
 }
 
 
-document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space') {
-        e.preventDefault();
-        if (isRunning) {
-            switchPlayer();
-        } else {
-            toggleTimer();
-        }
-    } else if (e.key === 'r' || e.key === 'R') {
-        if (confirm('タイマーをリセットしますか？')) {
-            resetTimers();
-        }
-    } else if (e.key === 'p' || e.key === 'P') {
-        toggleTimer();
-    }
-});
-
 window.addEventListener('beforeunload', (e) => {
     if (isRunning) {
         e.preventDefault();
