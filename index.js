@@ -146,9 +146,11 @@ function startTimer() {
                 // 通常モード
                 player1Time = Math.max(0, player1Time - elapsed);
                 if (player1Time === 0 && byoyomiEnabled) {
-                    // 秒読みモードへ移行
+                    // 秒読みモードへ移行し、プレイヤーを切り替える
                     player1Byoyomi = true;
                     player1ByoyomiTime = byoyomiSeconds * 1000;
+                    currentPlayer = 2;
+                    lastUpdateTime = Date.now();
                 } else if (player1Time === 0 && !byoyomiEnabled) {
                     stopTimer();
                     alert('プレイヤー1の時間切れです！');
@@ -166,9 +168,11 @@ function startTimer() {
                 // 通常モード
                 player2Time = Math.max(0, player2Time - elapsed);
                 if (player2Time === 0 && byoyomiEnabled) {
-                    // 秒読みモードへ移行
+                    // 秒読みモードへ移行し、プレイヤーを切り替える
                     player2Byoyomi = true;
                     player2ByoyomiTime = byoyomiSeconds * 1000;
+                    currentPlayer = 1;
+                    lastUpdateTime = Date.now();
                 } else if (player2Time === 0 && !byoyomiEnabled) {
                     stopTimer();
                     alert('プレイヤー2の時間切れです！');
