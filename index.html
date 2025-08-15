@@ -278,12 +278,13 @@
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            transition: bottom 0.3s ease, top 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .controls.position-player1 {
             top: 20px;
             bottom: auto;
+            transform: translateX(-50%) rotate(180deg);
         }
 
         .controls.position-player2 {
@@ -325,6 +326,8 @@
             .controls.position-player1 {
                 top: 10px;
                 bottom: auto;
+                transform: rotate(180deg);
+                left: 50%;
             }
 
             .controls.position-player2 {
