@@ -6,6 +6,12 @@ let timerInterval = null;
 let isRunning = false;
 let switchMode = 'continue';
 let lastUpdateTime = null;
+let byoyomiEnabled = true;
+let byoyomiSeconds = 30;
+let player1Byoyomi = false;
+let player2Byoyomi = false;
+let player1ByoyomiTime = 0;
+let player2ByoyomiTime = 0;
 
 function loadSettings() {
     const savedSettings = localStorage.getItem('chessClockSettings');
@@ -13,6 +19,8 @@ function loadSettings() {
         const settings = JSON.parse(savedSettings);
         initialTime = settings.initialTime || 600000;
         switchMode = settings.switchMode || 'continue';
+        byoyomiEnabled = settings.byoyomiEnabled !== undefined ? settings.byoyomiEnabled : true;
+        byoyomiSeconds = settings.byoyomiSeconds || 30;
         
         const modeRadios = document.getElementsByName('switchMode');
         modeRadios.forEach(radio => {
@@ -25,17 +33,25 @@ function loadSettings() {
         document.getElementById('hours').value = Math.floor(totalSeconds / 3600);
         document.getElementById('minutes').value = Math.floor((totalSeconds % 3600) / 60);
         document.getElementById('seconds').value = totalSeconds % 60;
+        document.getElementById('byoyomiEnabled').checked = byoyomiEnabled;
+        document.getElementById('byoyomiSeconds').value = byoyomiSeconds;
     }
     
     player1Time = initialTime;
     player2Time = initialTime;
+    player1Byoyomi = false;
+    player2Byoyomi = false;
+    player1ByoyomiTime = 0;
+    player2ByoyomiTime = 0;
     updateDisplay();
 }
 
 function saveSettings() {
     const settings = {
         initialTime: initialTime,
-        switchMode: switchMode
+        switchMode: switchMode,
+        byoyomiEnabled: byoyomiEnabled,
+        byoyomiSeconds: byoyomiSeconds
     };
     localStorage.setItem('chessClockSettings', JSON.stringify(settings));
 }
@@ -56,21 +72,37 @@ function updateDisplay() {
     const player2El = document.getElementById('player2');
     const controlsEl = document.getElementById('controls');
     
-    timer1.textContent = formatTime(player1Time);
-    timer2.textContent = formatTime(player2Time);
-    
-    if (player1Time <= 0) {
+    // 秒読みモードの表示
+    if (player1Byoyomi) {
+        const byoyomiTime = Math.ceil(player1ByoyomiTime / 1000);
+        timer1.textContent = `秒読み ${byoyomiTime}秒`;
         timer1.classList.add('time-up');
-        stopTimer();
     } else {
-        timer1.classList.remove('time-up');
+        timer1.textContent = formatTime(player1Time);
+        if (player1Time <= 0 && byoyomiEnabled) {
+            timer1.classList.add('time-up');
+        } else if (player1Time <= 0 && !byoyomiEnabled) {
+            timer1.classList.add('time-up');
+            stopTimer();
+        } else {
+            timer1.classList.remove('time-up');
+        }
     }
     
-    if (player2Time <= 0) {
+    if (player2Byoyomi) {
+        const byoyomiTime = Math.ceil(player2ByoyomiTime / 1000);
+        timer2.textContent = `秒読み ${byoyomiTime}秒`;
         timer2.classList.add('time-up');
-        stopTimer();
     } else {
-        timer2.classList.remove('time-up');
+        timer2.textContent = formatTime(player2Time);
+        if (player2Time <= 0 && byoyomiEnabled) {
+            timer2.classList.add('time-up');
+        } else if (player2Time <= 0 && !byoyomiEnabled) {
+            timer2.classList.add('time-up');
+            stopTimer();
+        } else {
+            timer2.classList.remove('time-up');
+        }
     }
     
     if (currentPlayer === 1) {
@@ -103,16 +135,44 @@ function startTimer() {
         lastUpdateTime = now;
         
         if (currentPlayer === 1) {
-            player1Time = Math.max(0, player1Time - elapsed);
-            if (player1Time === 0) {
-                stopTimer();
-                alert('プレイヤー1の時間切れです！');
+            if (player1Byoyomi) {
+                // 秒読みモード
+                player1ByoyomiTime = Math.max(0, player1ByoyomiTime - elapsed);
+                if (player1ByoyomiTime === 0) {
+                    stopTimer();
+                    alert('プレイヤー1の秒読み時間切れです！');
+                }
+            } else {
+                // 通常モード
+                player1Time = Math.max(0, player1Time - elapsed);
+                if (player1Time === 0 && byoyomiEnabled) {
+                    // 秒読みモードへ移行
+                    player1Byoyomi = true;
+                    player1ByoyomiTime = byoyomiSeconds * 1000;
+                } else if (player1Time === 0 && !byoyomiEnabled) {
+                    stopTimer();
+                    alert('プレイヤー1の時間切れです！');
+                }
             }
         } else if (currentPlayer === 2) {
-            player2Time = Math.max(0, player2Time - elapsed);
-            if (player2Time === 0) {
-                stopTimer();
-                alert('プレイヤー2の時間切れです！');
+            if (player2Byoyomi) {
+                // 秒読みモード
+                player2ByoyomiTime = Math.max(0, player2ByoyomiTime - elapsed);
+                if (player2ByoyomiTime === 0) {
+                    stopTimer();
+                    alert('プレイヤー2の秒読み時間切れです！');
+                }
+            } else {
+                // 通常モード
+                player2Time = Math.max(0, player2Time - elapsed);
+                if (player2Time === 0 && byoyomiEnabled) {
+                    // 秒読みモードへ移行
+                    player2Byoyomi = true;
+                    player2ByoyomiTime = byoyomiSeconds * 1000;
+                } else if (player2Time === 0 && !byoyomiEnabled) {
+                    stopTimer();
+                    alert('プレイヤー2の時間切れです！');
+                }
             }
         }
         
@@ -146,11 +206,22 @@ function switchPlayer(playerNum) {
     const previousPlayer = currentPlayer;
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     
+    // 秒読みモードのリセット（プレイヤーが切り替わった時）
+    if (previousPlayer === 1 && player1Byoyomi) {
+        player1ByoyomiTime = byoyomiSeconds * 1000;
+    } else if (previousPlayer === 2 && player2Byoyomi) {
+        player2ByoyomiTime = byoyomiSeconds * 1000;
+    }
+    
     if (switchMode === 'reset' && previousPlayer) {
         if (previousPlayer === 1) {
             player1Time = initialTime;
+            player1Byoyomi = false;
+            player1ByoyomiTime = 0;
         } else {
             player2Time = initialTime;
+            player2Byoyomi = false;
+            player2ByoyomiTime = 0;
         }
     }
     
@@ -177,6 +248,10 @@ function resetTimers() {
     currentPlayer = null;
     player1Time = initialTime;
     player2Time = initialTime;
+    player1Byoyomi = false;
+    player2Byoyomi = false;
+    player1ByoyomiTime = 0;
+    player2ByoyomiTime = 0;
     updateDisplay();
 }
 
@@ -194,12 +269,20 @@ function applySettings() {
         }
     });
     
+    byoyomiEnabled = document.getElementById('byoyomiEnabled').checked;
+    byoyomiSeconds = parseInt(document.getElementById('byoyomiSeconds').value) || 30;
+    
     saveSettings();
     resetTimers();
     
     alert('設定が適用されました');
 }
 
+
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('hidden');
+}
 
 window.addEventListener('beforeunload', (e) => {
     if (isRunning) {

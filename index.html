@@ -21,6 +21,10 @@
         }
 
         .settings-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
             background: rgba(255, 255, 255, 0.95);
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -30,6 +34,7 @@
             gap: 20px;
             flex-wrap: wrap;
             transition: transform 0.3s ease;
+            z-index: 10;
         }
 
         .settings-panel.hidden {
@@ -117,7 +122,7 @@
         }
 
         .main-container {
-            flex: 1;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -354,10 +359,30 @@
         .rotate-180 {
             transform: rotate(180deg);
         }
+
+        .toggle-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 11;
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .toggle-settings:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
     </style>
 </head>
 <body>
-    <div class="settings-panel" id="settingsPanel">
+    <div class="settings-panel hidden" id="settingsPanel">
         <div class="time-input-group">
             <div class="time-input">
                 <label for="hours">時間</label>
@@ -384,10 +409,24 @@
             </label>
         </div>
         
+        <div class="time-input-group">
+            <label style="margin-right: 10px;">秒読み設定:</label>
+            <div class="time-input">
+                <label for="byoyomiSeconds">一手の秒数</label>
+                <input type="number" id="byoyomiSeconds" min="0" max="60" value="30">
+            </div>
+            <label style="margin-left: 10px;">
+                <input type="checkbox" id="byoyomiEnabled" checked>
+                秒読みを有効にする
+            </label>
+        </div>
+        
         <button class="btn-primary" onclick="applySettings()">設定を適用</button>
     </div>
 
     <div class="main-container">
+        <button class="toggle-settings btn-secondary" onclick="toggleSettings()">設定</button>
+        
         <div class="player-timer player1" id="player1" onclick="switchPlayer(1)">
             <div class="active-indicator"></div>
             <div class="player-label rotate-180">プレイヤー 1</div>
