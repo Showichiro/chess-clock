@@ -14,6 +14,7 @@ let player1ByoyomiTime = 0;
 let player2ByoyomiTime = 0;
 let fischerEnabled = true;
 let fischerIncrement = 10; // フィッシャールールの加算秒数
+let fischerHandicapTarget = 'none'; // ハンデ対象 ('none', 'player1', 'player2')
 let player1MoveStartTime = null;
 let player2MoveStartTime = null;
 
@@ -27,6 +28,7 @@ function loadSettings() {
         byoyomiSeconds = settings.byoyomiSeconds || 30;
         fischerEnabled = settings.fischerEnabled !== undefined ? settings.fischerEnabled : true;
         fischerIncrement = settings.fischerIncrement || 10;
+        fischerHandicapTarget = settings.fischerHandicapTarget || 'none';
         
         const modeRadios = document.getElementsByName('switchMode');
         modeRadios.forEach(radio => {
@@ -43,6 +45,7 @@ function loadSettings() {
         document.getElementById('byoyomiSeconds').value = byoyomiSeconds;
         document.getElementById('fischerEnabled').checked = fischerEnabled;
         document.getElementById('fischerIncrement').value = fischerIncrement;
+        document.getElementById('fischerHandicapTarget').value = fischerHandicapTarget;
     }
     
     player1Time = initialTime;
@@ -61,7 +64,8 @@ function saveSettings() {
         byoyomiEnabled: byoyomiEnabled,
         byoyomiSeconds: byoyomiSeconds,
         fischerEnabled: fischerEnabled,
-        fischerIncrement: fischerIncrement
+        fischerIncrement: fischerIncrement,
+        fischerHandicapTarget: fischerHandicapTarget
     };
     localStorage.setItem('chessClockSettings', JSON.stringify(settings));
 }
@@ -233,19 +237,30 @@ function switchPlayer(playerNum) {
     // フィッシャールール: 時間を加算
     if (fischerEnabled && !player1Byoyomi && !player2Byoyomi) {
         const now = Date.now();
-        if (previousPlayer === 1) {
-            // プレイヤー1の時間に加算（最初の手は加算しない）
-            if (player1MoveStartTime) {
+        
+        if (fischerHandicapTarget === 'player1') {
+            // プレイヤー1が有利（プレイヤー1の手番終了時のみプレイヤー1に加算）
+            if (previousPlayer === 1 && player1MoveStartTime) {
                 player1Time += fischerIncrement * 1000;
             }
-            // プレイヤー2の移動開始時刻を記録
-            player2MoveStartTime = now;
-        } else if (previousPlayer === 2) {
-            // プレイヤー2の時間に加算（最初の手は加算しない）
-            if (player2MoveStartTime) {
+        } else if (fischerHandicapTarget === 'player2') {
+            // プレイヤー2が有利（プレイヤー2の手番終了時のみプレイヤー2に加算）
+            if (previousPlayer === 2 && player2MoveStartTime) {
                 player2Time += fischerIncrement * 1000;
             }
-            // プレイヤー1の移動開始時刻を記録
+        } else {
+            // 通常モード: 両プレイヤーとも自分の手番終了時に加算
+            if (previousPlayer === 1 && player1MoveStartTime) {
+                player1Time += fischerIncrement * 1000;
+            } else if (previousPlayer === 2 && player2MoveStartTime) {
+                player2Time += fischerIncrement * 1000;
+            }
+        }
+        
+        // 次のプレイヤーの移動開始時刻を記録
+        if (previousPlayer === 1) {
+            player2MoveStartTime = now;
+        } else if (previousPlayer === 2) {
             player1MoveStartTime = now;
         }
     }
@@ -319,6 +334,7 @@ function applySettings() {
     byoyomiSeconds = parseInt(document.getElementById('byoyomiSeconds').value) || 30;
     fischerEnabled = document.getElementById('fischerEnabled').checked;
     fischerIncrement = parseInt(document.getElementById('fischerIncrement').value) || 10;
+    fischerHandicapTarget = document.getElementById('fischerHandicapTarget').value;
     
     saveSettings();
     resetTimers();
