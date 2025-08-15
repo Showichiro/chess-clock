@@ -140,7 +140,8 @@ function toggleTimer() {
 function switchPlayer(playerNum) {
     if (!isRunning) return;
     
-    if (playerNum && playerNum === currentPlayer) return;
+    // アクティブなプレイヤーをタップした時のみ切り替える
+    if (playerNum && playerNum !== currentPlayer) return;
     
     const previousPlayer = currentPlayer;
     currentPlayer = currentPlayer === 1 ? 2 : 1;
