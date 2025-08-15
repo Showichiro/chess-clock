@@ -54,6 +54,7 @@ function updateDisplay() {
     const timer2 = document.getElementById('timer2');
     const player1El = document.getElementById('player1');
     const player2El = document.getElementById('player2');
+    const controlsEl = document.getElementById('controls');
     
     timer1.textContent = formatTime(player1Time);
     timer2.textContent = formatTime(player2Time);
@@ -75,18 +76,21 @@ function updateDisplay() {
     if (currentPlayer === 1) {
         player1El.classList.add('active');
         player2El.classList.remove('active');
+        controlsEl.className = 'controls position-player1';
     } else if (currentPlayer === 2) {
-        player1El.classList.add('active');
-        player2El.classList.remove('active');
+        player1El.classList.remove('active');
+        player2El.classList.add('active');
+        controlsEl.className = 'controls position-player2';
     } else {
         player1El.classList.remove('active');
         player2El.classList.remove('active');
+        controlsEl.className = 'controls position-neutral';
     }
 }
 
 function startTimer() {
     if (!currentPlayer) {
-        currentPlayer = 2;
+        currentPlayer = 1;
     }
     
     isRunning = true;
@@ -154,8 +158,17 @@ function switchPlayer(playerNum) {
 }
 
 function switchCurrentPlayer() {
-    if (!isRunning) return;
-    switchPlayer();
+    if (!isRunning) {
+        // タイマーが動いていない場合は、開始してから切り替え
+        if (!currentPlayer) {
+            currentPlayer = 1;
+        }
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        updateDisplay();
+    } else {
+        // タイマーが動いている場合は通常の切り替え
+        switchPlayer();
+    }
 }
 
 function resetTimers() {
@@ -186,10 +199,6 @@ function applySettings() {
     alert('設定が適用されました');
 }
 
-function toggleSettings() {
-    const panel = document.getElementById('settingsPanel');
-    panel.classList.toggle('hidden');
-}
 
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
