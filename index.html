@@ -411,14 +411,26 @@
         
         <div class="time-input-group">
             <label style="margin-right: 10px;">秒読み設定:</label>
+            <label style="margin-right: 10px;">
+                <input type="checkbox" id="byoyomiEnabled" checked>
+                有効
+            </label>
             <div class="time-input">
-                <label for="byoyomiSeconds">一手の秒数</label>
+                <label for="byoyomiSeconds">秒数</label>
                 <input type="number" id="byoyomiSeconds" min="0" max="60" value="30">
             </div>
-            <label style="margin-left: 10px;">
-                <input type="checkbox" id="byoyomiEnabled" checked>
-                秒読みを有効にする
+        </div>
+        
+        <div class="time-input-group">
+            <label style="margin-right: 10px;">フィッシャー設定:</label>
+            <label style="margin-right: 10px;">
+                <input type="checkbox" id="fischerEnabled" checked>
+                有効
             </label>
+            <div class="time-input">
+                <label for="fischerIncrement">加算秒数</label>
+                <input type="number" id="fischerIncrement" min="0" max="60" value="10">
+            </div>
         </div>
         
         <button class="btn-primary" onclick="applySettings()">設定を適用</button>

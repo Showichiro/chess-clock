@@ -12,6 +12,10 @@ let player1Byoyomi = false;
 let player2Byoyomi = false;
 let player1ByoyomiTime = 0;
 let player2ByoyomiTime = 0;
+let fischerEnabled = true;
+let fischerIncrement = 10; // フィッシャールールの加算秒数
+let player1MoveStartTime = null;
+let player2MoveStartTime = null;
 
 function loadSettings() {
     const savedSettings = localStorage.getItem('chessClockSettings');
@@ -21,6 +25,8 @@ function loadSettings() {
         switchMode = settings.switchMode || 'continue';
         byoyomiEnabled = settings.byoyomiEnabled !== undefined ? settings.byoyomiEnabled : true;
         byoyomiSeconds = settings.byoyomiSeconds || 30;
+        fischerEnabled = settings.fischerEnabled !== undefined ? settings.fischerEnabled : true;
+        fischerIncrement = settings.fischerIncrement || 10;
         
         const modeRadios = document.getElementsByName('switchMode');
         modeRadios.forEach(radio => {
@@ -35,6 +41,8 @@ function loadSettings() {
         document.getElementById('seconds').value = totalSeconds % 60;
         document.getElementById('byoyomiEnabled').checked = byoyomiEnabled;
         document.getElementById('byoyomiSeconds').value = byoyomiSeconds;
+        document.getElementById('fischerEnabled').checked = fischerEnabled;
+        document.getElementById('fischerIncrement').value = fischerIncrement;
     }
     
     player1Time = initialTime;
@@ -51,7 +59,9 @@ function saveSettings() {
         initialTime: initialTime,
         switchMode: switchMode,
         byoyomiEnabled: byoyomiEnabled,
-        byoyomiSeconds: byoyomiSeconds
+        byoyomiSeconds: byoyomiSeconds,
+        fischerEnabled: fischerEnabled,
+        fischerIncrement: fischerIncrement
     };
     localStorage.setItem('chessClockSettings', JSON.stringify(settings));
 }
@@ -127,6 +137,16 @@ function startTimer() {
     
     isRunning = true;
     lastUpdateTime = Date.now();
+    
+    // フィッシャールールの場合、移動開始時刻を記録
+    if (fischerEnabled) {
+        if (currentPlayer === 1) {
+            player1MoveStartTime = Date.now();
+        } else {
+            player2MoveStartTime = Date.now();
+        }
+    }
+    
     document.getElementById('startPauseBtn').textContent = '一時停止';
     
     timerInterval = setInterval(() => {
@@ -210,11 +230,33 @@ function switchPlayer(playerNum) {
     const previousPlayer = currentPlayer;
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     
+    // フィッシャールール: 時間を加算
+    if (fischerEnabled && !player1Byoyomi && !player2Byoyomi) {
+        const now = Date.now();
+        if (previousPlayer === 1) {
+            // プレイヤー1の時間に加算（最初の手は加算しない）
+            if (player1MoveStartTime) {
+                player1Time += fischerIncrement * 1000;
+            }
+            // プレイヤー2の移動開始時刻を記録
+            player2MoveStartTime = now;
+        } else if (previousPlayer === 2) {
+            // プレイヤー2の時間に加算（最初の手は加算しない）
+            if (player2MoveStartTime) {
+                player2Time += fischerIncrement * 1000;
+            }
+            // プレイヤー1の移動開始時刻を記録
+            player1MoveStartTime = now;
+        }
+    }
+    
     // 秒読みモードのリセット（プレイヤーが切り替わった時）
-    if (previousPlayer === 1 && player1Byoyomi) {
-        player1ByoyomiTime = byoyomiSeconds * 1000;
-    } else if (previousPlayer === 2 && player2Byoyomi) {
-        player2ByoyomiTime = byoyomiSeconds * 1000;
+    if (byoyomiEnabled) {
+        if (previousPlayer === 1 && player1Byoyomi) {
+            player1ByoyomiTime = byoyomiSeconds * 1000;
+        } else if (previousPlayer === 2 && player2Byoyomi) {
+            player2ByoyomiTime = byoyomiSeconds * 1000;
+        }
     }
     
     if (switchMode === 'reset' && previousPlayer) {
@@ -275,6 +317,8 @@ function applySettings() {
     
     byoyomiEnabled = document.getElementById('byoyomiEnabled').checked;
     byoyomiSeconds = parseInt(document.getElementById('byoyomiSeconds').value) || 30;
+    fischerEnabled = document.getElementById('fischerEnabled').checked;
+    fischerIncrement = parseInt(document.getElementById('fischerIncrement').value) || 10;
     
     saveSettings();
     resetTimers();
